@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,7 +16,7 @@ import { ko } from 'date-fns/locale';
 import { Loader2, ArrowLeft, Share2, CalendarIcon, Clock, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { useUser, UserButton } from '@clerk/nextjs';
+import { useUser, UserButton, SignInButton } from '@clerk/nextjs';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -30,7 +31,8 @@ const topics = [
 ];
 
 export default function FortunePage() {
-  const { user, isLoaded } = useUser();
+  const router = useRouter();
+  const { user, isLoaded, isSignedIn } = useUser();
   const [name, setName] = useState('');
   const [birthDate, setBirthDate] = useState<Date>();
   const [topic, setTopic] = useState('');
@@ -48,6 +50,44 @@ export default function FortunePage() {
     api.fortunes.getUserFortunes,
     user?.id ? { userId: user.id } : "skip"
   );
+
+  // 로그인 확인 - 로그인하지 않았으면 로그인 유도
+  if (isLoaded && !isSignedIn) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full rounded-[32px] border-none shadow-xl">
+          <CardContent className="p-12 text-center space-y-6">
+            <div className="text-6xl mb-4">🔮</div>
+            <h2 className="text-2xl font-bold text-slate-900">
+              로그인이 필요합니다
+            </h2>
+            <p className="text-slate-600">
+              운세 서비스를 이용하시려면 로그인해주세요
+            </p>
+            <SignInButton mode="modal">
+              <Button className="w-full h-14 text-lg font-bold rounded-2xl bg-[#0050ff] hover:bg-[#0040cc]">
+                로그인하기
+              </Button>
+            </SignInButton>
+            <Link href="/">
+              <Button variant="ghost" className="w-full">
+                돌아가기
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // 로딩 중
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin text-blue-500" />
+      </div>
+    );
+  }
 
   // 사용자 정보가 로드되면 자동으로 이름 채우기
   React.useEffect(() => {
