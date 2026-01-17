@@ -19,3 +19,6 @@ export const config = {
     '/(api|trpc)(.*)',
   ],
 }
+
+// Edge Runtime 명시
+export const runtime = 'edge';
